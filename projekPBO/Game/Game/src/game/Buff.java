@@ -78,6 +78,7 @@ public class Buff {
                 }
                 removeFromScene(); 
             } catch (InterruptedException e) {
+                System.err.println("Thread interrupted: " + e.getMessage());
             }
         }).start();
     }
