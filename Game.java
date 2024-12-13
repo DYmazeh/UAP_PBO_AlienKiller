@@ -145,4 +145,134 @@ public void start(Stage primaryStage) {
     }
       
 }
+
+// Memperbarui status permainan    
+private void update() {
     
+    // Gerakan Pahlawan dengan batas arena
+    if (up && pahlawan.getY() > 0) pahlawan.gerak(0, -5);
+    if (down && pahlawan.getY() < 600 - 50) pahlawan.gerak(0, 5);
+    if (left && pahlawan.getX() > 0) pahlawan.gerak(-5, 0);
+    if (right && pahlawan.getX() < 800 - 50) pahlawan.gerak(5, 0); 
+    
+    // Imunitas Pahlawan
+    if (isImmune && (System.currentTimeMillis() - immunityStartTime >= 2000)) {
+        isImmune = false; 
+    }
+    checkBuffCollision(); // Memeriksa tabrakan dengan buff
+    
+    // Menembak
+    if (canShoot) {
+    int dx = 0, dy = 0;
+    if (shootUp) dy = -1;
+    if (shootDown) dy = 1;
+    if (shootLeft) dx = -1;
+    if (shootRight) dx = 1;
+
+        if (dx != 0 || dy != 0) {
+        double magnitude = Math.sqrt(dx * dx + dy * dy);
+        dx = (int) Math.round(dx / magnitude * 5);
+        dy = (int) Math.round(dy / magnitude * 5);
+            
+            // Jika mengambil buff DoubleShot
+            if (pahlawan.isDoubleShot()) {
+            double[] arah = {
+            0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4,
+            Math.PI, 5 * Math.PI / 4, 3 * Math.PI / 2, 7 * Math.PI / 4
+            };
+                
+                // Menembak 8 arah
+                for (double sudut : arah) {
+                double dxTembak = Math.cos(sudut) * 5;
+                double dyTembak = Math.sin(sudut) * 5;
+                peluruList.add(new Peluru(pahlawan.getX() + 15, pahlawan.getY() + 15, (int) dxTembak, (int) dyTembak));
+                }
+            } 
+            else { // Peluru menjadi normal
+            peluruList.add(new Peluru(pahlawan.getX() + 15, pahlawan.getY() + 15, dx, dy));
+            }
+        canShoot = false;
+        new Timeline(new KeyFrame(Duration.millis(200), e -> canShoot = true)).play();
+        }
+    }
+    
+    // Menghapus peluru dan musuh yang sudah tidak terlihat
+    ArrayList<Peluru> peluruHapus = new ArrayList<>();
+    ArrayList<Musuh> musuhHapus = new ArrayList<>();
+    for (Peluru peluru : peluruList) {
+        peluru.update();
+        if (peluru.isOutOfBound(800, 600)) peluruHapus.add(peluru); // Jika peluru keluar dari batas, tandai untuk dihapus
+        
+        // Memeriksa tabrakan peluru dengan musuh
+        for (Musuh musuh : musuhList) {
+            if (peluru.getX() < musuh.getX() + 30 &&
+                    peluru.getX() + 10 > musuh.getX() &&
+                    peluru.getY() < musuh.getY() + 30 &&
+                    peluru.getY() + 10 > musuh.getY()) {
+                peluruHapus.add(peluru); // Tandai peluru untuk dihapus
+                musuhHapus.add(musuh); // Tandai musuh untuk dihapus
+                spawnBuff(musuh.getX(), musuh.getY()); // Tambahkan buff di posisi musuh yang mati
+                skor += 10;
+                break;
+            }
+        }
+    }
+    
+    // Menghapus peluru dan musuh yang sudah ditandai
+    peluruList.removeAll(peluruHapus);
+    musuhList.removeAll(musuhHapus);
+    
+    //Menambahkan Musuh per level dengan jeda 2 detik
+    if (musuhList.isEmpty() && !levelComplete) {
+        levelComplete = true;
+        new Timeline(new KeyFrame(Duration.seconds(2), e -> nextLevel())).play();
+    }
+    
+    //Gerakan Musuh menuju pahlawan
+    for (Musuh musuh : musuhList) {
+        int dx = (pahlawan.getX() - musuh.getX()) > 0 ? 1 : -1;
+        int dy = (pahlawan.getY() - musuh.getY()) > 0 ? 1 : -1;
+        musuh.gerak(dx, dy);
+
+    // Fungsi tabrakan dengan musuh dengan musuh
+    for (Musuh musuhLain : musuhList) {
+        if (musuh != musuhLain) {
+            int jarakX = Math.abs(musuh.getX() - musuhLain.getX());
+            int jarakY = Math.abs(musuh.getY() - musuhLain.getY());
+            
+            // Geser musuh sedikit menjauh dari musuh lainnya
+            if (jarakX < 50 && jarakY < 50) {
+                if (jarakX < jarakY) {
+                    if (musuh.getX() < musuhLain.getX()) {
+                        musuh.gerak(-1, 0); // Geser ke kiri
+                    } else {
+                        musuh.gerak(1, 0); // Geser ke kanan
+                    }
+                }
+                else {
+                    if (musuh.getY() < musuhLain.getY()) {
+                        musuh.gerak(0, -1); // Geser ke atas
+                    } else {
+                        musuh.gerak(0, 1); // Geser ke bawah
+                    }
+                }
+            }
+        }
+    }
+    
+        // Fungsi tabrakan antara pahlawan dan musuh
+        if (Math.abs(musuh.getX() - pahlawan.getX()) < 30 && Math.abs(musuh.getY() - pahlawan.getY()) < 30) {
+            if (!isImmune) {
+                pahlawan.kurangiNyawa(1);
+                isImmune = true;
+                immunityStartTime = System.currentTimeMillis(); 
+                if (pahlawan.getNyawa() == 0) {
+                    gameOver();
+                }
+            }
+            return;
+        }
+    }
+}
+
+private final List<Buff> buffList = new ArrayList<>(); // Daftar buff yang ada di arena
