@@ -276,3 +276,154 @@ private void update() {
 }
 
 private final List<Buff> buffList = new ArrayList<>(); // Daftar buff yang ada di arena
+
+// Memunculkan buff di posisi ketika Musuh mati
+private void spawnBuff(int x, int y) {
+    Random rand = new Random();
+    if (rand.nextInt(100) < 20) { // 20% kemungkinan muncul
+        String[] buffTypes = {"Speed", "Nyawa", "DoubleShot"}; // Array jenis buff
+        String jenisBuff = buffTypes[rand.nextInt(buffTypes.length)];  
+        Buff buff = new Buff(jenisBuff, x + rand.nextInt(20) - 10, y + rand.nextInt(20) - 10); 
+        buffList.add(buff); // Tambahkan ke Arena
+        Pane root = (Pane) gameOverText.getParent();
+        root.getChildren().add(buff.getBuffShape());
+
+        // Timer untuk menghilangkan buff jika tidak diambil
+        new Timeline(new KeyFrame(Duration.seconds(10), e -> {
+            root.getChildren().remove(buff.getBuffShape());
+            buffList.remove(buff); 
+        })).play();
+    }
+}
+
+// Fungsi pahlawan menyentuh buff
+private void checkBuffCollision() { 
+    ArrayList<Buff> buffHapus = new ArrayList<>();
+    for (Buff buff : buffList) {
+        if (pahlawan.getBounds().intersects(buff.getBuffShape().getBoundsInParent())) {
+            buff.activate(pahlawan); // Aktifkan efek buff
+            Pane root = (Pane) gameOverText.getParent();
+            root.getChildren().remove(buff.getBuffShape()); // Hapus dari scene
+            buffHapus.add(buff); // Tandai untuk dihapus dari Arena
+        }
+    }
+    buffList.removeAll(buffHapus); // Hapus buff yang telah dimakan
+}
+
+// Hapus semua buff ketika pahlawan mati
+private void removeAllBuffs() {
+    Pane root = (Pane) gameOverText.getParent();
+    for (Buff buff : buffList) {
+        root.getChildren().remove(buff.getBuffShape());
+    }
+    buffList.clear();
+}
+
+//Fungsi Musuh menabrak Pahlawan
+private void checkCollisionWithMusuh() {
+    for (Musuh musuh : musuhList) {
+        
+        // Menggerakkan musuh menuju pahlawan
+        int dx = (pahlawan.getX() - musuh.getX()) > 0 ? 1 : -1;
+        int dy = (pahlawan.getY() - musuh.getY()) > 0 ? 1 : -1;
+        musuh.gerak(dx, dy);
+
+        // Memeriksa tabrakan
+        if (Math.abs(musuh.getX() - pahlawan.getX()) < 30 && Math.abs(musuh.getY() - pahlawan.getY()) < 30) {
+            if (pahlawan.getNyawa() > 0) {
+                pahlawan.kurangiNyawa(1);
+                if (pahlawan.getNyawa() == 0) {
+                    gameOver();
+                }
+            }
+            return; 
+        }
+    }
+}
+
+//Melanjutkan ke level berikutnya
+private void nextLevel() {
+        level++;
+        spawnMusuh(level);
+        levelComplete = false;
+    }
+
+// Kondisi  ketika game over
+private void gameOver() {
+    isGameOver = true;
+    removeAllBuffs();
+    gameOverText.setVisible(true);
+    scoreText.setVisible(true);
+    scoreText.setText("Skor Akhir: " + skor);
+    scoreText.setVisible(true); 
+     
+    // Tambahkan tombol restart
+    Button restartButton = new Button("RESTART");
+    restartButton.setLayoutX(330);
+    restartButton.setLayoutY(350);
+    restartButton.setStyle(
+        "-fx-font-size: 20px; " +
+        "-fx-padding: 10px 20px; " +
+        "-fx-background-color: linear-gradient(to bottom, #ff0000, #0000ff); " +
+        "-fx-text-fill: white;"
+    );
+    restartButton.setOnAction(e -> restartGame()); 
+    Pane root = (Pane) gameOverText.getParent();
+    root.getChildren().add(restartButton);
+}
+    
+// Reset semua variabel untuk memulai ulang permainan
+private void restartGame() {
+    pahlawan = new Pahlawan(400, 300);
+    musuhList.clear();
+    peluruList.clear();
+    skor = 0;
+    level = 1;
+    isGameOver = false;
+    levelComplete = false;
+    gameOverText.setVisible(false);
+    scoreText.setVisible(false);
+    Pane root = (Pane) gameOverText.getParent();
+    root.getChildren().removeIf(node -> node instanceof Button);
+    spawnMusuh(level);
+}
+    
+// Render Gambar
+private void render(GraphicsContext gc) {
+    if (background != null) {
+        gc.drawImage(background, 0, 0, 800, 600);
+    }
+    if (pahlawan != null && pahlawanImage != null) {
+        gc.drawImage(pahlawanImage, pahlawan.getX(), pahlawan.getY(), 50, 50);
+    }
+    for (Musuh musuh : musuhList) {
+        if (musuhImage != null) {
+            gc.drawImage(musuhImage, musuh.getX(), musuh.getY(), 50, 50);
+        }
+    }
+    gc.setFill(Color.YELLOW);
+    for (Peluru peluru : peluruList) {
+        gc.fillRect(peluru.getX(), peluru.getY(), 10, 10);
+    }
+
+    // Teks skor,level,dan nyawa
+    gc.setFill(Color.WHITE);
+    gc.setFont(new Font(20));
+    gc.fillText("Score: " + skor, 10, 20);
+    gc.fillText("Level: " + level, 10, 40);
+    gc.fillText("Nyawa: " + pahlawan.nyawa, 10, 60);
+    
+    // Jika game over, tampilkan pesan "Game Over"
+    if (isGameOver) {
+    gc.setFill(Color.RED);
+    gc.setFont(new Font(50));
+    gc.fillText(" ", 240, 250);
+    gc.setFont(new Font(30));
+    gc.fillText(" ", 290, 300);
+    }
+}
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
