@@ -7,7 +7,7 @@ public class Pahlawan extends Karakter {
     private int speedMultiplier = 1; 
     private boolean doubleShot = false; 
     
-    
+       // Konstruktor untuk Pahlawan
     public Pahlawan(int x, int y) {
         super(x, y, 1);
         
@@ -22,10 +22,12 @@ public class Pahlawan extends Karakter {
         return pahlawanShape;
     }
 
+    // Mengembalikan batasan pahlawan
     public javafx.geometry.Bounds getBounds() {
         return pahlawanShape.getBoundsInParent(); 
     }
     
+     // Metode untuk menggerakkan pahlawan
     @Override
     public void gerak(int dx, int dy) {
         x = Math.max(0, Math.min(Constants.ARENA_WIDTH - 30, x + dx * speedMultiplier));
@@ -34,6 +36,7 @@ public class Pahlawan extends Karakter {
         pahlawanShape.setTranslateY(y);
     }
     
+    // Metode untuk menambah nyawa dengan batas 5
     public void tambahNyawa(int jumlah) {
     nyawa += jumlah; 
     if (nyawa > 5) {
@@ -41,6 +44,7 @@ public class Pahlawan extends Karakter {
     }
 }
 
+// Setter dan Getter 
     public int getNyawa() {
         return nyawa;
     }
