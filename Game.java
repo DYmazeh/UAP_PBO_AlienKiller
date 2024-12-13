@@ -46,7 +46,8 @@ public void start(Stage primaryStage) {
     Pane root = new Pane();
     Canvas canvas = new Canvas(800, 600);
     GraphicsContext gc = canvas.getGraphicsContext2D();   
-    
+
+    // Muat gambar
     background = new Image("game/2kmdlrc0av041.png");
     pahlawanImage = new Image("game/8652737_nftrocket_digital_rocket_system_security_icon.png");
     musuhImage = new Image("game/fa082ab5716b887.png");
@@ -57,6 +58,7 @@ public void start(Stage primaryStage) {
     root.getChildren().add(canvas);
     root.getChildren().add(backgroundView);
 
+     // Teks tombol START
     Button playButton = new Button("START");
     playButton.setLayoutX(350);
     playButton.setLayoutY(450);
@@ -67,14 +69,16 @@ public void start(Stage primaryStage) {
         "-fx-text-fill: white;"
     );
     root.getChildren().add(playButton);
-    
+
+    //Teks Game Over
     gameOverText = new Text("GAME OVER!");
     gameOverText.setFont(new Font(50));
     gameOverText.setFill(Color.RED);
     gameOverText.setLayoutX(250);
     gameOverText.setLayoutY(250);
     gameOverText.setVisible(false);
-
+    
+ // Teks skor akhir
     scoreText = new Text();
     scoreText.setFont(new Font(30));
     scoreText.setFill(Color.RED);
@@ -83,6 +87,7 @@ public void start(Stage primaryStage) {
     scoreText.setVisible(false);
     root.getChildren().addAll(gameOverText, scoreText);
 
+    // Aksi tombol START
     playButton.setOnAction(e -> {
         root.getChildren().removeAll(playButton, backgroundView);
         startGame(root, gc);                                      
@@ -93,6 +98,7 @@ public void start(Stage primaryStage) {
     primaryStage.setTitle("ALIEN KILLER");
     primaryStage.show();
 }
+     // Inisialisasi variabel permainan
     private void startGame(Pane root, GraphicsContext gc) {
     pahlawan = new Pahlawan(400, 300);
     musuhList = new ArrayList<>();
@@ -102,7 +108,8 @@ public void start(Stage primaryStage) {
     isGameOver = false;
     levelComplete = false;
     spawnMusuh(level);
-
+        
+ // Event listener untuk input keyboard
     Scene scene = root.getScene();
     scene.setOnKeyPressed(e -> {
         if (e.getCode() == KeyCode.W) up = true;
@@ -124,7 +131,8 @@ public void start(Stage primaryStage) {
         if (e.getCode() == KeyCode.LEFT) shootLeft = false;
         if (e.getCode() == KeyCode.RIGHT) shootRight = false;
     });
-
+        
+ // Mulai game loop
     new AnimationTimer() {
         @Override
         public void handle(long now) {
@@ -136,6 +144,7 @@ public void start(Stage primaryStage) {
     }.start();
 }
 
+    // Memunculkan Musuh
     private void spawnMusuh(int jumlah) {
     Random rand = new Random();
     for (int i = 0; i < jumlah; i++) {
